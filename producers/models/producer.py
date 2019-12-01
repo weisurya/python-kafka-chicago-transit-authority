@@ -39,7 +39,7 @@ class Producer:
         #
         self.broker_properties = {
             "bootstrap.servers": "PLAINTEXT://localhost:9092",
-            "schema.registry.url": "localhost:8081"
+            "schema.registry.url": "http://localhost:8081",
         }
 
         # If the topic does not already exist, try to create it
@@ -67,7 +67,9 @@ class Producer:
         exists = _topic_exist(client, self.topic_name)
 
         if exists is False:
-            _create_topic(client, self.topic_name)
+            _create_topic(
+                client, self.topic_name, self.num_partitions, 
+                self.num_replicas)
 
     def time_millis(self):
         return int(round(time.time() * 1000))
@@ -92,13 +94,13 @@ def _topic_exist(client, topic_name):
 
     return cluster_metadata.topics.get(topic_name) is not None
 
-def _create_topic(client, topic_name):
+def _create_topic(client, topic_name, num_partitions, num_replicas):
     futures = client.create_topics(
         [
             NewTopic(
                 topic=topic_name,
-                num_partitions=self.num_partitions,
-                replication_factor=self.num_replicas,
+                num_partitions=num_partitions,
+                replication_factor=num_replicas,
                 config={
                     'cleanup.policy': 'delete',
                     'delete.retention.ms': 2000,
